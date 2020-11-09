@@ -1,0 +1,4 @@
+include ':compiler'
+include ':database'
+include ':app'
+rootProject.name = "Module-Database"
