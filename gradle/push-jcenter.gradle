@@ -42,7 +42,5 @@ ext {
 }
 
 // Place it at the end of the file
-if (project.hasProperty("android")) { // Android libraries
-    apply from: rootProject.file('gradle/install.gradle')
-}
+apply from: rootProject.file('gradle/install.gradle')
 apply from: rootProject.file('gradle/bintray.gradle')

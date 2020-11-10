@@ -2,8 +2,8 @@
 buildscript {
     ext.kotlin_version = "1.4.10"
     repositories {
-        google()
         jcenter()
+        google()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.0"
@@ -19,8 +19,8 @@ allprojects {
     //如果是kotlin项目,请添加此项,纯Java项目请忽略
     tasks.withType(Javadoc).all { enabled = false }
     repositories {
-        google()
         jcenter()
+        google()
     }
 }
 

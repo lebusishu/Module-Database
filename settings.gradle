@@ -1,3 +1,3 @@
-include ':module-db-compiler'
-include ':module-db'
 include ':app'
+include ':module-db'
+include ':module-db-compiler'
