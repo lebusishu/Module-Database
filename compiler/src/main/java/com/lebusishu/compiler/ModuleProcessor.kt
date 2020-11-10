@@ -2,8 +2,9 @@ package com.lebusishu.compiler
 
 import com.google.auto.common.SuperficialValidation
 import com.google.auto.service.AutoService
-import com.lebusishu.database.annotations.ModuleDBConfig
-import com.lebusishu.database.annotations.ModuleDBVariable
+import com.lebusishu.TypeConfig
+import com.lebusishu.annotations.ModuleDBConfig
+import com.lebusishu.annotations.ModuleDBVariable
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.io.IOException
@@ -27,7 +28,8 @@ import kotlin.collections.LinkedHashSet
 @AutoService(Processor::class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 class ModuleProcessor : AbstractProcessor() {
-    private var processCount:Int=0
+    private var processCount: Int = 0
+
     /**
      * 生成文件的工具类
      */
@@ -72,7 +74,7 @@ class ModuleProcessor : AbstractProcessor() {
         annotations: MutableSet<out TypeElement>?,
         roundEnv: RoundEnvironment?
     ): Boolean {
-        if (processCount>0){
+        if (processCount > 0) {
             return false
         }
         //构造函数,保存所有数据库创建信息
@@ -80,6 +82,9 @@ class ModuleProcessor : AbstractProcessor() {
         constructor
             .addStatement("this.tablesMapping = %T<String,Any>()", HashMap::class)
             .addStatement("this.versionsMapping = %T<String,Long>()", HashMap::class)
+            .addStatement("this.pathMapping = %T<String,String>()", HashMap::class)
+            .addStatement("this.updateTableMapping = %T<String,String>()", HashMap::class)
+            .addStatement("this.deleteTableMapping = %T<String,String>()", HashMap::class)
         val file: FileSpec = roundEnv?.let { findAndParseTargets(it, constructor) } ?: return false
         try {
             file.writeTo(filer)
@@ -154,6 +159,9 @@ class ModuleProcessor : AbstractProcessor() {
         index: Int
     ): FunSpec.Builder {
         var version = 0
+        var dbPath = ""
+        var updates = ""
+        var deletes = ""
         // parse ModuleDBVariable：解析注解的方法并添加到集合里
         for (element in allFile) {
             val path: ModuleDBVariable =
@@ -163,13 +171,25 @@ class ModuleProcessor : AbstractProcessor() {
                 continue
             }
             val type = path.type
+            //如果是创建表语句
+            if (type == TypeConfig.TYPE_DB_CREATE_TABLE) {
+                constructor.addStatement("tables$index.add(%S)", value)
+            }
             //数据库版本
-            if (type == 1) {
+            if (type == TypeConfig.TYPE_DB_VERSION) {
                 version = value.toInt()
             }
-            //如果是创建表语句
-            if (type == 2) {
-                constructor.addStatement("tables$index.add(%S)", value)
+            //数据库路径
+            if (type == TypeConfig.TYPE_DB_PATH) {
+                dbPath = value
+            }
+            //数据库发生改变的表
+            if (type == TypeConfig.TYPE_DB_TABLE_UPDATE) {
+                updates = value
+            }
+            //数据库删除的表
+            if (type == TypeConfig.TYPE_DB_TABLE_DELETE) {
+                deletes = value
             }
         }
         // add method
@@ -177,10 +197,16 @@ class ModuleProcessor : AbstractProcessor() {
         //$T for Types:类型，通过 $T 进行映射，会自动import声明
         constructor
             .addStatement(
-                "versionsMapping.put(%S,%L)", dbName, version
+                "tablesMapping.put(%S,tables$index)", dbName
             )
             .addStatement(
-                "tablesMapping.put(%S,tables$index)", dbName
+                "versionsMapping.put(%S,%L)", dbName, version
+            ).addStatement(
+                "pathMapping.put(%S,%S)", dbName, dbPath
+            ).addStatement(
+                "updateTableMapping.put(%S,%S)", dbName, updates
+            ).addStatement(
+                "deleteTableMapping.put(%S,%S)", dbName, deletes
             )
         return constructor
     }
@@ -197,13 +223,34 @@ class ModuleProcessor : AbstractProcessor() {
         )
             .build()
         fieldSpecs.add(mapping)
-        val className = PropertySpec.builder(
+        val version = PropertySpec.builder(
             "versionsMapping",
             HashMap::class.parameterizedBy(String::class, Long::class),
             KModifier.FINAL
         )
             .build()
-        fieldSpecs.add(className)
+        fieldSpecs.add(version)
+        val path = PropertySpec.builder(
+            "pathMapping",
+            HashMap::class.parameterizedBy(String::class, String::class),
+            KModifier.FINAL
+        )
+            .build()
+        fieldSpecs.add(path)
+        val update = PropertySpec.builder(
+            "updateTableMapping",
+            HashMap::class.parameterizedBy(String::class, String::class),
+            KModifier.FINAL
+        )
+            .build()
+        fieldSpecs.add(update)
+        val delete = PropertySpec.builder(
+            "deleteTableMapping",
+            HashMap::class.parameterizedBy(String::class, String::class),
+            KModifier.FINAL
+        )
+            .build()
+        fieldSpecs.add(delete)
         return fieldSpecs
     }
 

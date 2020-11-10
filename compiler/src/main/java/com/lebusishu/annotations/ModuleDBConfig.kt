@@ -1,4 +1,4 @@
-package com.lebusishu.database.annotations
+package com.lebusishu.annotations
 
 /**
  * Description : 数据库配置类
@@ -9,5 +9,5 @@ package com.lebusishu.database.annotations
  */
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
-annotation class ModuleDBConfig(val dbName: String) {
+annotation class ModuleDBConfig(val dbName: String="module") {
 }

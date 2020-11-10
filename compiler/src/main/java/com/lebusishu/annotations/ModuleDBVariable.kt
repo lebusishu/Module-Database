@@ -1,4 +1,4 @@
-package com.lebusishu.database.annotations
+package com.lebusishu.annotations
 
 /**
  * Description : 数据库需要的SQL语句，数据库版本等
@@ -9,5 +9,5 @@ package com.lebusishu.database.annotations
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
-annotation class ModuleDBVariable(val value: String, val type: Int) {
+annotation class ModuleDBVariable(val value: String, val type: Int = 1) {
 }
