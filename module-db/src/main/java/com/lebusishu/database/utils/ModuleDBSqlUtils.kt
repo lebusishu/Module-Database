@@ -149,7 +149,7 @@ class ModuleDBSqlUtils {
                     builder.append(column).append(if (index == columns.indices.last) "" else ",")
                 }
             }
-            builder.append(" FROM ").append(table).append(if (where.isEmpty()) "" else where)
+            builder.append(" FROM ").append(table).append(if (where.isEmpty()) "" else " $where")
             return builder
         }
 

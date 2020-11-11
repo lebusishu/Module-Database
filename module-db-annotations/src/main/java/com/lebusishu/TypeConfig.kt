@@ -12,26 +12,26 @@ interface TypeConfig {
         /*
         创建表
          */
-        val TYPE_DB_CREATE_TABLE: Int = 1
+        const val TYPE_DB_CREATE_TABLE: Int = 1
 
         /*
         数据库版本
          */
-        val TYPE_DB_VERSION: Int = 2
+        const val TYPE_DB_VERSION: Int = 2
 
         /*
         发生变化的表
          */
-        val TYPE_DB_TABLE_UPDATE: Int = 3
+        const val TYPE_DB_TABLE_UPDATE: Int = 3
 
         /*
         删除的表
          */
-        val TYPE_DB_TABLE_DELETE: Int = 4
+        const val TYPE_DB_TABLE_DELETE: Int = 4
 
         /*
         数据库路径
          */
-        val TYPE_DB_PATH: Int = 5
+        const val TYPE_DB_PATH: Int = 5
     }
 }
