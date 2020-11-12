@@ -24,13 +24,13 @@ class AppDao : ModuleBaseDao() {
             val values = ContentValues()
             values.put("NAME", "module")
             values.put("version", 1)
-            val count = insert(getDatabase(dbName), "DB_VERSION1", values)
+            val count = insert(getDatabase(dbName), "DB_VERSION", values)
             count.toInt()
         }
     }
 
     private fun getDBVersionCount(dbName: String): Int {
-        val sql = "SELECT COUNT(*) FROM DB_VERSION1 WHERE NAME = ?"
+        val sql = "SELECT COUNT(*) FROM DB_VERSION WHERE NAME = ?"
         val cursor = rawQuery(getDatabase(dbName), sql, "module")
         if (cursor == null || cursor.count <= 0) {
             return -1
@@ -47,7 +47,7 @@ class AppDao : ModuleBaseDao() {
      * 更新数据库版本
      */
     fun replaceDBVersion(name: String, version: Int, dbName: String): Int {
-        val sql = "UPDATE DB_VERSION1 SET VERSION=$version WHERE NAME = ?"
+        val sql = "UPDATE DB_VERSION SET VERSION=$version WHERE NAME = ?"
         val cursor = rawQuery(getDatabase(dbName), sql, name) ?: return -1
         val count = cursor.count
         cursor.close()
@@ -55,7 +55,7 @@ class AppDao : ModuleBaseDao() {
     }
 
     fun getDBVersion(dbName: String): Int {
-        val sql = "SELECT VERSION FROM DB_VERSION1 WHERE NAME = ?"
+        val sql = "SELECT VERSION FROM DB_VERSION WHERE NAME = ?"
         val cursor = rawQuery(getDatabase(dbName), sql, "module")
         if (cursor == null || cursor.count <= 0) {
             return -1

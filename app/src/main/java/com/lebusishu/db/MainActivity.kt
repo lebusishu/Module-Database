@@ -22,19 +22,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
         for (db in dbs){
-            Log.i(TAG, "db name is :$db")
-            val list=ModuleReflectTool.getCreateTableSqls(db as String)
-            Log.i(TAG, "get target $db table sql:\n"+list?.joinToString ("\n"))
-            val v= ModuleReflectTool.getDatabaseVersion(db)
-            Log.i(TAG, "get target $db db version:$v")
-            val count = AppDao.mInstance.addDBVersion(db)
+            val count = AppDao.mInstance.addDBVersion(db as String)
             Log.i(TAG, "add target $db db count:$count")
             var version = AppDao.mInstance.getDBVersion(db)
             Log.i(TAG, "get target $db db version:$version")
             version++
             AppDao.mInstance.replaceDBVersion("module", version,db)
             Log.i(TAG, "update target $db db version:$version")
-
         }
     }
 }

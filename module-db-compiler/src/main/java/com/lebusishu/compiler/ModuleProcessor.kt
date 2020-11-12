@@ -81,8 +81,7 @@ class ModuleProcessor : AbstractProcessor() {
         val constructor = FunSpec.constructorBuilder()
         constructor
             .addStatement("this.tablesMapping = %T<String,Any>()", HashMap::class)
-            .addStatement("this.versionsMapping = %T<String,Long>()", HashMap::class)
-            .addStatement("this.pathMapping = %T<String,String>()", HashMap::class)
+            .addStatement("this.versionsMapping = %T<String,Int>()", HashMap::class)
             .addStatement("this.updateTableMapping = %T<String,String>()", HashMap::class)
             .addStatement("this.deleteTableMapping = %T<String,String>()", HashMap::class)
         val file: FileSpec = roundEnv?.let { findAndParseTargets(it, constructor) } ?: return false
@@ -179,10 +178,6 @@ class ModuleProcessor : AbstractProcessor() {
             if (type == TypeConfig.TYPE_DB_VERSION) {
                 version = value.toInt()
             }
-            //数据库路径
-            if (type == TypeConfig.TYPE_DB_PATH) {
-                dbPath = value
-            }
             //数据库发生改变的表
             if (type == TypeConfig.TYPE_DB_TABLE_UPDATE) {
                 updates = value
@@ -201,8 +196,6 @@ class ModuleProcessor : AbstractProcessor() {
             )
             .addStatement(
                 "versionsMapping.put(%S,%L)", dbName, version
-            ).addStatement(
-                "pathMapping.put(%S,%S)", dbName, dbPath
             ).addStatement(
                 "updateTableMapping.put(%S,%S)", dbName, updates
             ).addStatement(
@@ -225,18 +218,11 @@ class ModuleProcessor : AbstractProcessor() {
         fieldSpecs.add(mapping)
         val version = PropertySpec.builder(
             "versionsMapping",
-            HashMap::class.parameterizedBy(String::class, Long::class),
+            HashMap::class.parameterizedBy(String::class, Int::class),
             KModifier.FINAL
         )
             .build()
         fieldSpecs.add(version)
-        val path = PropertySpec.builder(
-            "pathMapping",
-            HashMap::class.parameterizedBy(String::class, String::class),
-            KModifier.FINAL
-        )
-            .build()
-        fieldSpecs.add(path)
         val update = PropertySpec.builder(
             "updateTableMapping",
             HashMap::class.parameterizedBy(String::class, String::class),

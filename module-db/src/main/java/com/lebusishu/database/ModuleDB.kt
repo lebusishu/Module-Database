@@ -2,6 +2,7 @@ package com.lebusishu.database
 
 import android.database.sqlite.SQLiteDatabase
 import android.text.TextUtils
+import android.util.Log
 import com.lebusishu.database.config.DBConfigs
 import com.lebusishu.database.utils.ModuleReflectTool
 
@@ -26,6 +27,7 @@ class ModuleDB {
         val name = dbName + DBConfigs.DATABASE_NAME_SUFFIX
         val context = ModuleReflectTool.getApplication()
         val dbVersion = ModuleReflectTool.getDatabaseVersion(dbName)
+        Log.i("ModuleDB", "open dbName:$dbName version:$dbVersion name:$name")
         helper = ModuleDatabaseHelper(context, name, null, dbVersion, dbName)
         db = helper!!.writableDatabase
     }
@@ -41,6 +43,7 @@ class ModuleDB {
     }
 
     companion object {
+        @Volatile
         private var mInstance: ModuleDB? = null
 
         /**
@@ -50,12 +53,12 @@ class ModuleDB {
             if (mInstance == null) {
                 mInstance = ModuleDB()
                 mInstance!!.open(dbName)
-                mInstance!!.currentDb == dbName
+                mInstance!!.currentDb = dbName
             } else if (mInstance!!.db != null && !TextUtils.equals(dbName, mInstance!!.currentDb)) {
                 close()
                 mInstance = ModuleDB()
                 mInstance!!.open(dbName)
-                mInstance!!.currentDb == dbName
+                mInstance!!.currentDb = dbName
             }
             return mInstance
         }

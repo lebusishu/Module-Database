@@ -3,6 +3,7 @@ package com.lebusishu.database
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.text.TextUtils
+import com.lebusishu.database.utils.ModuleReflectTool
 
 /**
  * <p>Description : 数据库升级，数据迁移
@@ -18,23 +19,21 @@ import android.text.TextUtils
  */
 class ModuleDBMigrationHelper {
     companion object {
+        private const val tableTempName = "_TEMP"
         val mInstance: ModuleDBMigrationHelper by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
             ModuleDBMigrationHelper()
         }
-        private const val tableTempName = "_TEMP"
-        private var tableTempNameIndex = 0
-        fun getTableTempName(): String {
-            return tableTempName + tableTempNameIndex
-        }
     }
+
+    private var dbName: String? = ""
 
     /**
      * 迁移所有的数据
      *
      * @param db         数据库
      */
-    fun migrateAllTable(db: SQLiteDatabase) {
-        tableTempNameIndex++
+    fun migrateAllTable(db: SQLiteDatabase, dbName: String?) {
+        this.dbName = dbName
         buildTempTable(db)
         rebuildSpecifyTables(db)
         restoreTable(db, false)
@@ -45,20 +44,11 @@ class ModuleDBMigrationHelper {
      *
      * @param db         数据库
      */
-    fun migrateSpecifyTable(db: SQLiteDatabase, vararg tables: String?) {
-        var inPreTransaction = false
-        if (db.inTransaction()) {
-            db.setTransactionSuccessful()
-            db.endTransaction()
-            inPreTransaction = true
-        }
-        tableTempNameIndex++
+    fun migrateSpecifyTable(db: SQLiteDatabase, dbName: String?, vararg tables: String?) {
+        this.dbName = dbName
         buildTempTable(db, *tables)
         rebuildSpecifyTables(db, *tables)
         restoreTable(db, true, *tables)
-        if (inPreTransaction && !db.inTransaction()) {
-            db.beginTransaction()
-        }
     }
 
     /**
@@ -86,7 +76,7 @@ class ModuleDBMigrationHelper {
                 ) {
                     continue
                 }
-                if (getTableTempName().equals(tableName, true)) {
+                if (tableTempName.equals(tableName, true)) {
                     db.execSQL("drop table $tableName")
                     continue
                 }
@@ -145,7 +135,7 @@ class ModuleDBMigrationHelper {
         var cursor: Cursor? = null
         try {
             cursor = db.rawQuery("SELECT * FROM $table limit 1", null)
-            if (cursor == null || cursor.count <= 0) {
+            if (cursor == null) {
                 return columns
             }
             return cursor.columnNames.asList()
@@ -170,13 +160,13 @@ class ModuleDBMigrationHelper {
         var cursor: Cursor? = null
         try {
             cursor = db.rawQuery(
-                "SELECT COUNT(*) FROM sqlite_mater WHERE type='table' AND name='$table'",
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='$table'",
                 null
             )
             if (cursor == null || cursor.count <= 0) {
                 return false
             }
-            return cursor.getInt(0) > 0
+            return cursor.moveToFirst() && cursor.getInt(0) > 0
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
@@ -186,24 +176,33 @@ class ModuleDBMigrationHelper {
     }
 
     /**
-     * 清除全部表数据
+     * 清除表数据
      *
      * @param db 数据库
      */
     private fun cleanTables(db: SQLiteDatabase, list: List<String?>) {
-
         for (table in list) {
-            db.execSQL("DROP TABLE $table")
+            db.execSQL("DROP TABLE IF EXISTS $table")
         }
     }
 
     /**
-     * 创建全部表
+     * 创建需要升级的表
      *
      * @param db 数据库
      */
     private fun buildTables(db: SQLiteDatabase, list: List<String?>) {
-
+        val sqls = ModuleReflectTool.getCreateTableSqls(dbName)
+        if (sqls.isNullOrEmpty()) {
+            return
+        }
+        sqls.forEach { sql ->
+            for (s in list) {
+                if ((sql as String).contains("$s (")) {
+                    db.execSQL(sql)
+                }
+            }
+        }
     }
 
     /**
@@ -231,12 +230,12 @@ class ModuleDBMigrationHelper {
      * @param db         数据库
      * @param tables 指定的数据
      */
-    private fun dropSpecifyTable(db: SQLiteDatabase, vararg tables: String?) {
+    fun dropSpecifyTable(db: SQLiteDatabase, vararg tables: String?) {
         if (tables.isEmpty()) {
             return
         }
         for (table in tables) {
-            db.execSQL("DROP TABLE $table")
+            db.execSQL("DROP TABLE IF EXISTS $table")
         }
     }
 
@@ -274,73 +273,72 @@ class ModuleDBMigrationHelper {
         var list: ArrayList<String>? = null
         if (!isSpecify) {
             list = getAllTables(db)
-            if (list.isNullOrEmpty()) {
-                return
+        } else {
+            list = ArrayList()
+            if (tables.isNotEmpty()) {
+                for (table in tables) {
+                    if (table.isNullOrEmpty()) {
+                        continue
+                    }
+                    list.add(table)
+                }
             }
         }
         val insert = StringBuilder()
         val delete = StringBuilder()
         val properties = ArrayList<String?>()
-        if (tables.isNotEmpty()) {
-            for (table in tables) {
-                val tableNameTemp = table + getTableTempName()
-                if (tableIsExist(db, tableNameTemp)) {
-                    continue
-                }
-                properties.clear()
-                if (!isSpecify) {
-                    list!!.remove(table)
-                }
-                /*
-                 * 1,如果有字段删除 2，字段数量不改变 3，有字段增加（尽量做到别改变列名）
-                 * 当有字段改变（增加）需要增加到properties后面
-                 */
-                val tempColumns = getColumns(db, tableNameTemp)
-                if (tempColumns.isNullOrEmpty()) {
-                    continue
-                }
-                val migrates = getMigrates(db, table)
-                for (migrate in migrates) {
-                    if (!"_id".equals(migrate.name, true)) {
-                        if (tempColumns.contains(migrate.name)) {
-                            properties.add(migrate.name)
-                        }
-                    }
-                }
-                try {
-                    db.beginTransaction()
-                    insert.append("INSERT INTO ").append(table).append(" (")
-                    insert.append(TextUtils.join(",", properties))
-                    insert.append(") SELECT")
-                    insert.append(TextUtils.join(",", properties))
-                    insert.append(" FROM ").append(tableNameTemp).append(";")
-                    db.execSQL(insert.toString())
-                    insert.delete(0, insert.length)
 
-                    delete.append("DROP TABLE ").append(tableNameTemp)
-                    db.execSQL(delete.toString())
-                    delete.delete(0, delete.length)
-                    db.setTransactionSuccessful()
-                } catch (e: Exception) {
-                    delete.delete(0, delete.length)
-                    delete.append("DROP TABLE ").append(tableNameTemp)
-                    db.execSQL(delete.toString())
-                    delete.delete(0, delete.length)
-                    e.printStackTrace()
-                } finally {
-                    if (db.inTransaction()) {
-                        db.endTransaction()
+        for (table in list) {
+            val tableNameTemp = table + tableTempName
+            // 查询表是否存在
+            if (!tableIsExist(db, tableNameTemp)) {
+                continue
+            }
+            properties.clear()
+            if (!isSpecify) {
+                list.remove(table)
+            }
+            /*
+             * 1,如果有字段删除 2，字段数量不改变 3，有字段增加（尽量做到别改变列名）
+             * 当有字段改变（增加）需要增加到properties后面
+             */
+            val tempColumns = getColumns(db, tableNameTemp)
+            if (tempColumns.isNullOrEmpty()) {
+                continue
+            }
+            val migrates = getMigrates(db, table)
+            for (migrate in migrates) {
+                if (!"_id".equals(migrate.name, true)) {
+                    if (tempColumns.contains(migrate.name)) {
+                        properties.add(migrate.name)
                     }
                 }
             }
-            //所有数据库的表---这里检测是否有剩余无用的缓存表（特别是修改表名后造成的无用表缓存）
-            if (!isSpecify && list != null) {
-                for (table in list) {
-                    val tempTable = table + getTableTempName()
-                    if (tableIsExist(db, table)) {
-                        db.execSQL("DROP TABLE $tempTable")
-                    }
-                }
+            try {
+                insert.append("INSERT INTO ").append(table).append(" (")
+                insert.append(TextUtils.join(",", properties))
+                insert.append(") SELECT ")
+                insert.append(TextUtils.join(",", properties))
+                insert.append(" FROM ").append(tableNameTemp).append(";")
+                db.execSQL(insert.toString())
+                insert.delete(0, insert.length)
+
+                delete.append("DROP TABLE IF EXISTS $tableNameTemp")
+                db.execSQL(delete.toString())
+                delete.delete(0, delete.length)
+            } catch (e: Exception) {
+                delete.delete(0, delete.length)
+                delete.append("DROP TABLE IF EXISTS $tableNameTemp")
+                db.execSQL(delete.toString())
+                delete.delete(0, delete.length)
+                e.printStackTrace()
+            }
+        }
+        //所有数据库的表---这里检测是否有剩余无用的缓存表（特别是修改表名后造成的无用表缓存）
+        for (table in list) {
+            val tempTable = table + tableTempName
+            if (tableIsExist(db, table)) {
+                db.execSQL("DROP TABLE IF EXISTS $tempTable")
             }
         }
     }
@@ -356,13 +354,14 @@ class ModuleDBMigrationHelper {
             return
         }
         var tableName = table
-        var tableTempName: String? = null
-        if (tableName!!.endsWith(getTableTempName(), true)) {
+        val tempName: String?
+        // 这里主要是为了处理上次升级异常造成的冗余数据
+        if (tableName!!.endsWith(tableTempName, true)) {
             db.execSQL("DELETE FROM $table")
-            tableTempName = table
+            tempName = table
             tableName = tableName.substring(0, tableName.length - 5)
         } else {
-            tableTempName = table + getTableTempName()
+            tempName = table + tableTempName
         }
         val create = StringBuilder()
         val insert = StringBuilder()
@@ -370,7 +369,7 @@ class ModuleDBMigrationHelper {
         val properties = ArrayList<String?>()
         try {
             properties.clear()
-            create.append("CREATE TABLE IF NOT EXISTS ").append(tableTempName).append(" (")
+            create.append("CREATE TABLE IF NOT EXISTS ").append(tempName).append(" (")
             val migrates = getMigrates(db, tableName)
             for (migrate in migrates) {
                 // 如果包含关键字，不生成缓存表，并删除原表
@@ -380,7 +379,7 @@ class ModuleDBMigrationHelper {
                 properties.add(migrate.name)
                 create.append(divider).append(migrate.name).append(" ").append(migrate.type)
                 val tag = "1" == migrate.pk
-                if ("INTEGER".equals(migrate.type) && !tag) {
+                if ("INTEGER" == migrate.type && !tag) {
                     create.append(" DEFAULT 0")
                 }
                 if (tag) {
@@ -397,21 +396,15 @@ class ModuleDBMigrationHelper {
             if (properties.contains("_ID")) {
                 properties.remove("_ID")
             }
-            db.beginTransaction()
-            insert.append("INSERT INTO ").append(tableTempName).append(" (")
+            insert.append("INSERT INTO ").append(tempName).append(" (")
             insert.append(TextUtils.join(",", properties))
-            insert.append(") SELECT")
+            insert.append(") SELECT ")
             insert.append(TextUtils.join(",", properties))
             insert.append(" FROM ").append(tableName).append(";")
             db.execSQL(insert.toString())
             insert.delete(0, insert.length)
-            db.setTransactionSuccessful()
         } catch (e: Exception) {
             e.printStackTrace()
-        } finally {
-            if (db.inTransaction()) {
-                db.endTransaction()
-            }
         }
     }
 }

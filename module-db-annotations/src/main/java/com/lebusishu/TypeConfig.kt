@@ -28,10 +28,5 @@ interface TypeConfig {
         删除的表
          */
         const val TYPE_DB_TABLE_DELETE: Int = 4
-
-        /*
-        数据库路径
-         */
-        const val TYPE_DB_PATH: Int = 5
     }
 }

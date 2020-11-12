@@ -14,7 +14,7 @@ import com.lebusishu.database.utils.ModuleReflectTool
  * Email：wangxiaohui1118@gmail.com
  * Person in charge : lebusishu
  */
-class ModuleDatabaseHelper(
+class ModuleDatabaseHelper private constructor(
     context: Context?,
     name: String?,
     factory: SQLiteDatabase.CursorFactory?,
@@ -32,12 +32,37 @@ class ModuleDatabaseHelper(
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
+        Log.i("ModuleDatabaseHelper", "$dbName create")
         //创建需要的表
         createAllTables(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        Log.i("ModuleDatabaseHelper", "db old version:$oldVersion,new version:$newVersion")
+        Log.i("ModuleDatabaseHelper", "$dbName db old version:$oldVersion,new version:$newVersion")
+        if (db == null) {
+            return
+        }
+
+        when (oldVersion) {
+            1 -> {
+                val updates = ModuleReflectTool.getDatabaseUpdateTables(dbName)
+                if (!updates.isNullOrEmpty()) {
+                    Log.i("ModuleDatabaseHelper", "$dbName update ${updates.joinToString()}")
+                    ModuleDBMigrationHelper.mInstance.migrateSpecifyTable(
+                        db, dbName,
+                        *updates.toTypedArray()
+                    )
+                }
+                val deletes = ModuleReflectTool.getDatabaseDeleteTables(dbName)
+                if (!deletes.isNullOrEmpty()) {
+                    Log.i("ModuleDatabaseHelper", "$dbName delete ${deletes.joinToString()}")
+                    ModuleDBMigrationHelper.mInstance.dropSpecifyTable(
+                        db,
+                        *deletes.toTypedArray()
+                    )
+                }
+            }
+        }
     }
 
     /**

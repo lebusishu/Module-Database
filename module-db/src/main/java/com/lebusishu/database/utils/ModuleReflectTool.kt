@@ -57,7 +57,7 @@ class ModuleReflectTool {
         /**
          * 获取创建表的SQL
          */
-        fun getCreateTableSqls(dbName: String): ArrayList<*>? {
+        fun getCreateTableSqls(dbName: String?): ArrayList<*>? {
             return try {
                 val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
                 val tablesField =
@@ -84,6 +84,38 @@ class ModuleReflectTool {
 
             } catch (e: Exception) {
                 1
+            }
+        }
+
+        /**
+         * 获取数据库升级的表
+         */
+        fun getDatabaseUpdateTables(dbName: String?): List<String>? {
+            return try {
+                val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
+                val tablesField =
+                    clazz.getDeclaredField("updateTableMapping").apply { isAccessible = true }
+                val obj = clazz.newInstance()
+                val result = tablesField.get(obj) as HashMap<*, *>
+                if (result.isNullOrEmpty()) null else (result[dbName] as String).split(",")
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        /**
+         * 获取数据库删除的表
+         */
+        fun getDatabaseDeleteTables(dbName: String?): List<String>? {
+            return try {
+                val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
+                val tablesField =
+                    clazz.getDeclaredField("deleteTableMapping").apply { isAccessible = true }
+                val obj = clazz.newInstance()
+                val result = tablesField.get(obj) as HashMap<*, *>
+                if (result.isNullOrEmpty()) null else (result[dbName] as String).split(",")
+            } catch (e: Exception) {
+                null
             }
         }
     }
