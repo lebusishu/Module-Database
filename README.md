@@ -31,30 +31,33 @@
 **自定义编译器**
 > 编译阶段识别注解并生成kotlin模板文件，以便动态生成数据库和管理数据库升级，模板格式如下
 ```kotlin
-  init {
-    this.tablesMapping = HashMap<String,Any>()
-    this.versionsMapping = HashMap<String,Int>()
-    this.updateTableMapping = HashMap<String,String>()
-    this.deleteTableMapping = HashMap<String,String>()
-    val tables0 = ArrayList<String>()
-    tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , NAME2 TEXT , NAME3 TEXT , VERSION INTEGER DEFAULT 1);")
-    tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION1 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION2 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION3 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tablesMapping.put("demo1",tables0)
-    versionsMapping.put("demo1",1)
-    updateTableMapping.put("demo1","DB_VERSION,DB_VERSION2")
-    deleteTableMapping.put("demo1","DB_VERSION3")
-    val tables1 = ArrayList<String>()
-    tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , NAME2 TEXT , NAME3 TEXT , VERSION INTEGER DEFAULT 1);")
-    tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION1 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION2 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION3 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
-    tablesMapping.put("demo2",tables1)
-    versionsMapping.put("demo2",1)
-    updateTableMapping.put("demo2","DB_VERSION")
-    deleteTableMapping.put("demo2","DB_VERSION1,DB_VERSION2")
-  }
+    init {
+      this.tablesMapping = HashMap<String,Any>()
+      this.versionsMapping = HashMap<String,Int>()
+      this.pathMapping = HashMap<String,String>()
+      this.updateTableMapping = HashMap<String,String>()
+      this.deleteTableMapping = HashMap<String,String>()
+      val tables0 = ArrayList<String>()
+      tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , NAME2 TEXT , NAME3 TEXT , VERSION INTEGER DEFAULT 1);")
+      tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION1 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION2 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tables0.add("CREATE TABLE IF NOT EXISTS DB_VERSION3 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tablesMapping.put("demo1",tables0)
+      versionsMapping.put("demo1",1)
+      pathMapping.put("demo1","./")
+      updateTableMapping.put("demo1","DB_VERSION,DB_VERSION2")
+      deleteTableMapping.put("demo1","DB_VERSION3")
+      val tables1 = ArrayList<String>()
+      tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , NAME2 TEXT , NAME3 TEXT , VERSION INTEGER DEFAULT 1);")
+      tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION1 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION2 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tables1.add("CREATE TABLE IF NOT EXISTS DB_VERSION3 (ID INTEGER PRIMARY KEY AUTOINCREMENT , NAME TEXT , VERSION INTEGER DEFAULT 1);")
+      tablesMapping.put("demo2",tables1)
+      versionsMapping.put("demo2",1)
+      pathMapping.put("demo2","./")
+      updateTableMapping.put("demo2","DB_VERSION")
+      deleteTableMapping.put("demo2","DB_VERSION1,DB_VERSION2")
+    }
 ```
 ## module-db
 **识别模板，创建数据库，数据库基本操作和数据库升级迁移的封装，避免了对数据库操作过多的非业务操作。注，如直接打开指定路径数据，暂不支持数据库升级**
