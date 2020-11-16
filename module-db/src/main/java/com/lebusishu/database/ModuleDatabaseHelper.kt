@@ -31,23 +31,28 @@ class ModuleDatabaseHelper private constructor(
         this.dbName = dbName
     }
 
+    companion object {
+        private val TAG = ModuleDatabaseHelper::class.java.simpleName
+    }
+
     override fun onCreate(db: SQLiteDatabase?) {
-        Log.i("ModuleDatabaseHelper", "$dbName create")
+        Log.i(TAG, "$dbName create")
         //创建需要的表
         createAllTables(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        Log.i("ModuleDatabaseHelper", "$dbName db old version:$oldVersion,new version:$newVersion")
+        Log.i(TAG, "$dbName db old version:$oldVersion,new version:$newVersion")
         if (db == null) {
             return
         }
 
         when (oldVersion) {
-            1 -> {
+            // TODO: 11/16/20 指定版本做具体升级
+            oldVersion -> {
                 val updates = ModuleReflectTool.getDatabaseUpdateTables(dbName)
                 if (!updates.isNullOrEmpty()) {
-                    Log.i("ModuleDatabaseHelper", "$dbName update ${updates.joinToString()}")
+                    Log.i(TAG, "$dbName update ${updates.joinToString()}")
                     ModuleDBMigrationHelper.mInstance.migrateSpecifyTable(
                         db, dbName,
                         *updates.toTypedArray()
@@ -55,7 +60,7 @@ class ModuleDatabaseHelper private constructor(
                 }
                 val deletes = ModuleReflectTool.getDatabaseDeleteTables(dbName)
                 if (!deletes.isNullOrEmpty()) {
-                    Log.i("ModuleDatabaseHelper", "$dbName delete ${deletes.joinToString()}")
+                    Log.i(TAG, "$dbName delete ${deletes.joinToString()}")
                     ModuleDBMigrationHelper.mInstance.dropSpecifyTable(
                         db,
                         *deletes.toTypedArray()

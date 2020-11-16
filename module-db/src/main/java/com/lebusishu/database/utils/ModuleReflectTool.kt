@@ -88,6 +88,22 @@ class ModuleReflectTool {
         }
 
         /**
+         * 获取数据库路径
+         */
+        fun getDatabasePath(dbName: String?): String? {
+            return try {
+                val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
+                val tablesField =
+                    clazz.getDeclaredField("pathMapping").apply { isAccessible = true }
+                val obj = clazz.newInstance()
+                val result = tablesField.get(obj) as HashMap<*, *>
+                if (result.isNullOrEmpty()) null else result[dbName] as String
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        /**
          * 获取数据库升级的表
          */
         fun getDatabaseUpdateTables(dbName: String?): List<String>? {

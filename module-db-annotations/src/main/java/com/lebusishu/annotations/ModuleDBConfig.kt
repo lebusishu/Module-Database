@@ -9,5 +9,5 @@ package com.lebusishu.annotations
  */
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS)
-annotation class ModuleDBConfig(val dbName: String="module") {
+annotation class ModuleDBConfig(val dbName: String="module",val dbVersion:Int=1) {
 }

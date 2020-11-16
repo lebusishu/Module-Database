@@ -82,6 +82,7 @@ class ModuleProcessor : AbstractProcessor() {
         constructor
             .addStatement("this.tablesMapping = %T<String,Any>()", HashMap::class)
             .addStatement("this.versionsMapping = %T<String,Int>()", HashMap::class)
+            .addStatement("this.pathMapping = %T<String,String>()", HashMap::class)
             .addStatement("this.updateTableMapping = %T<String,String>()", HashMap::class)
             .addStatement("this.deleteTableMapping = %T<String,String>()", HashMap::class)
         val file: FileSpec = roundEnv?.let { findAndParseTargets(it, constructor) } ?: return false
@@ -126,13 +127,14 @@ class ModuleProcessor : AbstractProcessor() {
             }
             val annotation: ModuleDBConfig = element.getAnnotation(ModuleDBConfig::class.java)
             val dbName: String = annotation.dbName
+            val dbVersion: Int = annotation.dbVersion
             if (dbName.isEmpty()) {
                 return@forEachIndexed
             }
             //返回在此类或接口中直接声明的字段，方法，构造函数和成员类型
             val allFile: List<Element> = element.enclosedElements
             file.addStatement("val tables$index = %T<String>()", ArrayList::class)
-            file = parseModuleDB(dbName, allFile, file, index)
+            file = parseModuleDB(dbName,dbVersion, allFile, file, index)
         }
         val nameFile = PREFIX + "sqls"
         //指定生成的文件名
@@ -153,11 +155,11 @@ class ModuleProcessor : AbstractProcessor() {
      */
     private fun parseModuleDB(
         dbName: String,
+        dbVersion: Int,
         allFile: List<Element>,
         constructor: FunSpec.Builder,
         index: Int
     ): FunSpec.Builder {
-        var version = 0
         var dbPath = ""
         var updates = ""
         var deletes = ""
@@ -175,8 +177,8 @@ class ModuleProcessor : AbstractProcessor() {
                 constructor.addStatement("tables$index.add(%S)", value)
             }
             //数据库版本
-            if (type == TypeConfig.TYPE_DB_VERSION) {
-                version = value.toInt()
+            if (type == TypeConfig.TYPE_DB_PATH) {
+                dbPath = value
             }
             //数据库发生改变的表
             if (type == TypeConfig.TYPE_DB_TABLE_UPDATE) {
@@ -195,7 +197,10 @@ class ModuleProcessor : AbstractProcessor() {
                 "tablesMapping.put(%S,tables$index)", dbName
             )
             .addStatement(
-                "versionsMapping.put(%S,%L)", dbName, version
+                "versionsMapping.put(%S,%L)", dbName, dbVersion
+            )
+            .addStatement(
+                "pathMapping.put(%S,%S)", dbName, dbPath
             ).addStatement(
                 "updateTableMapping.put(%S,%S)", dbName, updates
             ).addStatement(
@@ -223,6 +228,13 @@ class ModuleProcessor : AbstractProcessor() {
         )
             .build()
         fieldSpecs.add(version)
+        val path = PropertySpec.builder(
+            "pathMapping",
+            HashMap::class.parameterizedBy(String::class, String::class),
+            KModifier.FINAL
+        )
+            .build()
+        fieldSpecs.add(path)
         val update = PropertySpec.builder(
             "updateTableMapping",
             HashMap::class.parameterizedBy(String::class, String::class),

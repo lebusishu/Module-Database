@@ -11,10 +11,10 @@ import com.lebusishu.annotations.ModuleDBVariable
  * Email：wangxiaohui1118@gmail.com
  * Person in charge : lebusishu
  */
-@ModuleDBConfig(dbName = "demo2")
+@ModuleDBConfig(dbName = "demo2",dbVersion = 1)
 class DBConfig2 {
-    @ModuleDBVariable(value = "1", type = TypeConfig.TYPE_DB_VERSION)
-    private val dbVersion = 0
+    @ModuleDBVariable(value = "./", type = TypeConfig.TYPE_DB_PATH)
+    private val dbPath = ""
 
     @ModuleDBVariable(
         value = "CREATE TABLE IF NOT EXISTS DB_VERSION (" +

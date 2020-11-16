@@ -15,9 +15,9 @@ interface TypeConfig {
         const val TYPE_DB_CREATE_TABLE: Int = 1
 
         /*
-        数据库版本
+        打开其他数据库路径
          */
-        const val TYPE_DB_VERSION: Int = 2
+        const val TYPE_DB_PATH: Int = 2
 
         /*
         发生变化的表
