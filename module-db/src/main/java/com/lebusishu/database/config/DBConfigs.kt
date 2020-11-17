@@ -13,6 +13,5 @@ interface DBConfigs {
          * 数据库统一后缀名
          */
         const val DATABASE_NAME_SUFFIX = "_module.db"
-
     }
 }

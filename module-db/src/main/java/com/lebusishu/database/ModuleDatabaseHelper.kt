@@ -36,7 +36,6 @@ class ModuleDatabaseHelper private constructor(
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        Log.i(TAG, "$dbName create")
         //创建需要的表
         createAllTables(db)
     }
@@ -48,19 +47,16 @@ class ModuleDatabaseHelper private constructor(
         }
 
         when (oldVersion) {
-            // TODO: 11/16/20 指定版本做具体升级
             oldVersion -> {
-                val updates = ModuleReflectTool.getDatabaseUpdateTables(dbName)
+                val updates = ModuleReflectTool.getDatabaseUpdateTables(dbName,oldVersion)
                 if (!updates.isNullOrEmpty()) {
-                    Log.i(TAG, "$dbName update ${updates.joinToString()}")
                     ModuleDBMigrationHelper.mInstance.migrateSpecifyTable(
                         db, dbName,
                         *updates.toTypedArray()
                     )
                 }
-                val deletes = ModuleReflectTool.getDatabaseDeleteTables(dbName)
+                val deletes = ModuleReflectTool.getDatabaseDeleteTables(dbName,oldVersion)
                 if (!deletes.isNullOrEmpty()) {
-                    Log.i(TAG, "$dbName delete ${deletes.joinToString()}")
                     ModuleDBMigrationHelper.mInstance.dropSpecifyTable(
                         db,
                         *deletes.toTypedArray()

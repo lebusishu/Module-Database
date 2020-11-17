@@ -1,5 +1,7 @@
 package com.lebusishu.annotations
 
+import com.lebusishu.TypeConfig
+
 /**
  * Description : 数据库需要的SQL语句，数据库版本等
  * Create by wxh on 11/9/20
@@ -9,5 +11,8 @@ package com.lebusishu.annotations
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
-annotation class ModuleDBVariable(val value: String, val type: Int = 1) {
+annotation class ModuleDBVariable(
+    val value: String,
+    val type: Int = TypeConfig.TYPE_DB_CREATE_TABLE
+) {
 }

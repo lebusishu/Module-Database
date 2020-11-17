@@ -2,7 +2,6 @@ package com.lebusishu.database
 
 import android.database.sqlite.SQLiteDatabase
 import android.text.TextUtils
-import android.util.Log
 import com.lebusishu.database.config.DBConfigs
 import com.lebusishu.database.utils.ModuleReflectTool
 
@@ -27,7 +26,6 @@ class ModuleDB {
         val name = dbName + DBConfigs.DATABASE_NAME_SUFFIX
         val context = ModuleReflectTool.getApplication()
         val dbVersion = ModuleReflectTool.getDatabaseVersion(dbName)
-        Log.i("ModuleDB", "open dbName:$dbName version:$dbVersion name:$name")
         helper = ModuleDatabaseHelper(context, name, null, dbVersion, dbName)
         db = helper!!.writableDatabase
     }
@@ -78,13 +76,6 @@ class ModuleDB {
                 mInstance!!.helper = null
             }
             mInstance = null
-        }
-
-        /**
-         * 获取数据库名
-         */
-        fun getDBName(): String {
-            return mInstance!!.helper!!.databaseName
         }
     }
 }

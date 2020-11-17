@@ -11,7 +11,7 @@ import com.lebusishu.annotations.ModuleDBVariable
  * Email：wangxiaohui1118@gmail.com
  * Person in charge : lebusishu
  */
-@ModuleDBConfig(dbName = "demo1",dbVersion = 1)
+@ModuleDBConfig(dbName = "demo1", dbVersion = 3)
 class DBConfig {
     @ModuleDBVariable(value = "./", type = TypeConfig.TYPE_DB_PATH)
     private val dbpath = ""
@@ -25,6 +25,7 @@ class DBConfig {
                 " VERSION INTEGER DEFAULT 1);", type = TypeConfig.TYPE_DB_CREATE_TABLE
     )
     private val createDbTable = ""
+
     @ModuleDBVariable(
         value = "CREATE TABLE IF NOT EXISTS DB_VERSION1 (" +
                 "ID INTEGER PRIMARY KEY AUTOINCREMENT ," +
@@ -49,9 +50,16 @@ class DBConfig {
     )
     private val createDbTable3 = ""
 
-    @ModuleDBVariable(value = "DB_VERSION,DB_VERSION2", type = TypeConfig.TYPE_DB_TABLE_UPDATE)
+    @ModuleDBVariable(
+        value = "1:DB_VERSION,DB_VERSION2;" +
+                "2:DB_VERSION3",
+        type = TypeConfig.TYPE_DB_TABLE_UPDATE
+    )
     private val updateTables = ""
 
-    @ModuleDBVariable(value = "DB_VERSION3", type = TypeConfig.TYPE_DB_TABLE_DELETE)
+    @ModuleDBVariable(
+        value = "2:DB_VERSION2",
+        type = TypeConfig.TYPE_DB_TABLE_DELETE
+    )
     private val deleteTables = ""
 }

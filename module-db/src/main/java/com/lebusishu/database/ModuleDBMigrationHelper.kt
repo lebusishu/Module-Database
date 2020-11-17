@@ -211,12 +211,11 @@ class ModuleDBMigrationHelper {
      * @param db 数据库
      */
     private fun rebuildSpecifyTables(db: SQLiteDatabase, vararg tables: String?) {
-        val list: List<String?>
 
-        if (tables.isNullOrEmpty()) {
-            list = getAllTables(db)
+        val list: List<String?> = if (tables.isNullOrEmpty()) {
+            getAllTables(db)
         } else {
-            list = tables.toList()
+            tables.toList()
         }
         for (table in list) {
             cleanTables(db, list)
@@ -270,7 +269,7 @@ class ModuleDBMigrationHelper {
      * @param tables 还原指定数据
      */
     private fun restoreTable(db: SQLiteDatabase, isSpecify: Boolean, vararg tables: String?) {
-        var list: ArrayList<String>? = null
+        val list: ArrayList<String>?
         if (!isSpecify) {
             list = getAllTables(db)
         } else {

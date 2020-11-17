@@ -104,34 +104,69 @@ class ModuleReflectTool {
         }
 
         /**
-         * 获取数据库升级的表
+         * 解析获取数据库升级的表
          */
-        fun getDatabaseUpdateTables(dbName: String?): List<String>? {
-            return try {
+        fun getDatabaseUpdateTables(dbName: String?, dbVersion: Int): List<String>? {
+            try {
                 val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
                 val tablesField =
                     clazz.getDeclaredField("updateTableMapping").apply { isAccessible = true }
                 val obj = clazz.newInstance()
                 val result = tablesField.get(obj) as HashMap<*, *>
-                if (result.isNullOrEmpty()) null else (result[dbName] as String).split(",")
+                if (result.isNullOrEmpty()) {
+                    return null
+                } else {
+                    val value = result[dbName] as String
+                    if (value.isEmpty()) {
+                        return null
+                    }
+                    if (!value.contains(";") && !value.contains(":")) {
+                        return value.split(",")
+                    }
+                    val versions = value.split(";")
+                    for (version in versions) {
+                        if (version.startsWith("$dbVersion:")) {
+                            return version.split(":")[1].split(",")
+                        }
+                    }
+                    return null
+                }
             } catch (e: Exception) {
-                null
+                return null
             }
         }
 
         /**
-         * 获取数据库删除的表
+         * 解析获取数据库删除的表
          */
-        fun getDatabaseDeleteTables(dbName: String?): List<String>? {
-            return try {
+        fun getDatabaseDeleteTables(dbName: String?, dbVersion: Int): List<String>? {
+            try {
                 val clazz = Class.forName("com.lebusishu.db.kt_auto_sqls")
                 val tablesField =
                     clazz.getDeclaredField("deleteTableMapping").apply { isAccessible = true }
                 val obj = clazz.newInstance()
                 val result = tablesField.get(obj) as HashMap<*, *>
-                if (result.isNullOrEmpty()) null else (result[dbName] as String).split(",")
+                if (result.isNullOrEmpty()) {
+                    return null
+                } else {
+                    val value = result[dbName] as String
+                    if (value.isEmpty()) {
+                        return null
+                    }
+                    if (!value.contains(";") && !value.contains(":")) {
+                        return value.split(",")
+                    }
+                    val versions = value.split(";")
+                    for (version in versions) {
+                        if (version.startsWith("$dbVersion:")) {
+                            return version.split(":")[1].split(",")
+                        }
+                    }
+                    return null
+                }
             } catch (e: Exception) {
-                null
+                e.printStackTrace()
+                return null
             }
         }
     }
