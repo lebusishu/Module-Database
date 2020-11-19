@@ -24,6 +24,7 @@ dependencies {
 //    api project(path: ':module-db')
 //    api project(path: ':module-db-annotations')
 //    kapt project(path: ':module-db-compiler')
+    implementation project(path: ':module-sqlite')
     implementation 'com.library.lebusishu:module-db:1.0.4'
     implementation 'com.library.lebusishu:module-db-annotations:1.0.2'
     kapt 'com.library.lebusishu:module-db-compiler:1.0.4'

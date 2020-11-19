@@ -1,0 +1,6 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.4.1)
+#声明compat变量
+SET(ICU_COMPAT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/icu_compat)
+#把子目录的CMake源文件添加进来
+ADD_SUBDIRECTORY(icu_compat)
+ADD_SUBDIRECTORY(sqlite)

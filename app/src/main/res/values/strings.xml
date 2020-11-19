@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Module-Database</string>
+    <string name="insert_data">插入10000数据</string>
+    <string name="normal_search">普通查询</string>
+    <string name="fts_search">FTS查询</string>
+    <string name="result_search">查询结果</string>
+    <string name="key_search">查询关键字</string>
 </resources>
