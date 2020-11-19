@@ -62,13 +62,16 @@
 ## module-db
 **识别模板，创建数据库，数据库基本操作和数据库升级迁移的封装，避免了对数据库操作过多的非业务操作。注，如直接打开指定路径数据，暂不支持数据库升级**
 
+## module-sqlite
+**自编译sqlite源码，打开fts5支持，并在原有分词器基础上支持了中文分词器**
+
 ## 快速入门
 **第一步:配置数据库**
 ```kotlin
-@ModuleDBConfig(dbName = "demo1")
+@ModuleDBConfig(dbName = "demo1", dbVersion = 3)
 class DBConfig {
-    @ModuleDBVariable(value = "1", type = TypeConfig.TYPE_DB_VERSION)
-    private val dbVersion = 0
+    @ModuleDBVariable(value = "./", type = TypeConfig.TYPE_DB_PATH)
+    private val dbpath = ""
 
     @ModuleDBVariable(
         value = "CREATE TABLE IF NOT EXISTS DB_VERSION (" +
@@ -79,6 +82,7 @@ class DBConfig {
                 " VERSION INTEGER DEFAULT 1);", type = TypeConfig.TYPE_DB_CREATE_TABLE
     )
     private val createDbTable = ""
+
     @ModuleDBVariable(
         value = "CREATE TABLE IF NOT EXISTS DB_VERSION1 (" +
                 "ID INTEGER PRIMARY KEY AUTOINCREMENT ," +
@@ -103,10 +107,17 @@ class DBConfig {
     )
     private val createDbTable3 = ""
 
-    @ModuleDBVariable(value = "DB_VERSION,DB_VERSION2", type = TypeConfig.TYPE_DB_TABLE_UPDATE)
+    @ModuleDBVariable(
+        value = "1:DB_VERSION,DB_VERSION2;" +
+                "2:DB_VERSION3",
+        type = TypeConfig.TYPE_DB_TABLE_UPDATE
+    )
     private val updateTables = ""
 
-    @ModuleDBVariable(value = "DB_VERSION3", type = TypeConfig.TYPE_DB_TABLE_DELETE)
+    @ModuleDBVariable(
+        value = "2:DB_VERSION2",
+        type = TypeConfig.TYPE_DB_TABLE_DELETE
+    )
     private val deleteTables = ""
 }
 ```
